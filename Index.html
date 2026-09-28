@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <title>Certificate Verification</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .card {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 3px 15px rgba(0,0,0,.12);
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 13px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 13px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #1a73e8;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #999;
+    }
+
+    .message {
+      margin-top: 20px;
+    }
+
+    .certificate {
+      border-top: 1px solid #ddd;
+      margin-top: 20px;
+      padding-top: 20px;
+    }
+
+    .download {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 16px;
+      background: #16803c;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+
+    .error {
+      color: #c5221f;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h1>Certificate Verification</h1>
+
+  <p>
+    Enter the email address used when registering for your certificate.
+  </p>
+
+  <input
+    type="email"
+    id="email"
+    placeholder="Enter your email address"
+    autocomplete="email"
+  >
+
+  <button
+    id="searchButton"
+    onclick="searchCertificate()">
+    Find My Certificate
+  </button>
+
+  <div id="message" class="message"></div>
+
+  <div id="results"></div>
+
+</div>
+
+<script>
+
+function searchCertificate() {
+
+  const email =
+    document.getElementById('email').value.trim();
+
+  const message =
+    document.getElementById('message');
+
+  const results =
+    document.getElementById('results');
+
+  const button =
+    document.getElementById('searchButton');
+
+  results.innerHTML = '';
+
+  if (!email) {
+
+    message.innerHTML =
+      '<p class="error">' +
+      'Please enter your email address.' +
+      '</p>';
+
+    return;
+  }
+
+  message.innerHTML =
+    '<p>Searching...</p>';
+
+  button.disabled = true;
+
+  google.script.run
+
+    .withSuccessHandler(function(response) {
+
+      button.disabled = false;
+
+      if (!response.found) {
+
+        message.innerHTML =
+          '<p class="error">' +
+          escapeHTML(response.message) +
+          '</p>';
+
+        return;
+      }
+
+      message.innerHTML =
+        '<p>Certificate found.</p>';
+
+      response.certificates.forEach(
+        function(cert) {
+
+          const div =
+            document.createElement('div');
+
+          div.className =
+            'certificate';
+
+          div.innerHTML =
+
+            '<h3>' +
+            escapeHTML(cert.name) +
+            '</h3>' +
+
+            '<p><strong>Certificate ID:</strong> ' +
+            escapeHTML(cert.certificateID) +
+            '</p>' +
+
+            '<p><strong>Stream:</strong> ' +
+            escapeHTML(cert.stream) +
+            '</p>' +
+
+            '<p><strong>Issue Date:</strong> ' +
+            escapeHTML(cert.date) +
+            '</p>' +
+
+            '<a class="download" ' +
+            'href="' +
+            escapeHTML(cert.pdfURL) +
+            '" ' +
+            'target="_blank">' +
+            'View / Download Certificate' +
+            '</a>';
+
+          results.appendChild(div);
+        }
+      );
+
+    })
+
+    .withFailureHandler(function(error) {
+
+      button.disabled = false;
+
+      message.innerHTML =
+        '<p class="error">' +
+        'Something went wrong. Please try again.' +
+        '</p>';
+
+      console.error(error);
+
+    })
+
+    .findCertificateByEmail(email);
+}
+
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+</script>
+
+</body>
+</html>
