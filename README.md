@@ -184,4 +184,4 @@ Only rows with `Status = GENERATED` are shown as valid on the verification page.
 
 ## License
 
-Add a license of your choice (for example MIT) before publishing.
+MIT license.
